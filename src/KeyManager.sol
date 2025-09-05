@@ -113,7 +113,7 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         if (initialManager == address(0)) {
             revert InvalidAddress();
         }
-        __Ownable_init(msg.sender);
+        // __Ownable_init();
         __UUPSUpgradeable_init();
         manager = initialManager;
     }
