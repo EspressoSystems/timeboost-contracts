@@ -2,13 +2,24 @@
 
 This directory contains the smart contracts that power the decentralized Timeboost protocol. These contracts run on Ethereum-compatible blockchains and provide the foundation for secure, decentralized time synchronization.
 
+## Table of Contents
+
+- [Background](#background)
+- [What Are These Contracts For?](#what-are-these-contracts-for)
+- [Handling Upgradeability](#handling-upgradeability)
+- [The Contracts](#the-contracts)
+- [Getting Started](#getting-started)
+- [Deployment](#deployment)
+- [Security](#security)
+- [Getting Help](#getting-help)
+
 ## Background
 Smart contracts are executable code, deployed on blockchains that 
 can be read from / written to anyone with an internet connection. 
 Transaction data and smart contract storage is public and can be 
 accessed in blockchain explorers. In decentralized Timeboost, 
 smart contracts are used to allow anyone to interact with various 
-of the protocol. This readme is directed at developers who are 
+parts of the protocol. This readme is directed at developers who are 
 contributing to or making use of this decentralized timeboost 
 implementation. 
 
@@ -26,7 +37,7 @@ These contracts act as the "coordination layer" that allows the Timeboost networ
 ## Handling Upgradeability
 
 ### The Upgrade Problem
-Once deployed, smart contracts can't be changed. To solve this, we use a proxy solution that performs functionally as upgradeable contracts. 
+Once deployed, smart contracts can't be changed. To solve this, we use a proxy solution that functions as upgradeable contracts. 
 
 ### The Proxy Solution
 We use a "proxy pattern" that works like this:
@@ -77,7 +88,15 @@ This is the "shell" that makes upgrades possible:
 ## Getting Started
 
 ### Prerequisites
-- **Foundry** - For building and testing contracts
+
+Before you begin, make sure you have:
+
+- **Foundry** - For building, testing, and deploying contracts
+  ```bash
+  # Install Foundry
+  curl -L https://foundry.paradigm.xyz | bash
+  foundryup
+  ```
 
 ### Building the Contracts
 ```bash
@@ -101,13 +120,13 @@ forge test --match-test test_setThresholdEncryptionKey
 ```
 
 ### Integration Testing
-For testing contract interactions from Rust code, see the [timeboost-contract README](../timeboost-contract/README.md).
+For testing contract interactions from Rust code, see the [timeboost-contract README](https://github.com/EspressoSystems/timeboost/tree/main/timeboost-contract/README.md) in the Rust repository.
 
 ## Deployment
 
 You can deploy to a local anvil network (as done in the test), a fork of a real network, a testnet network (e.g. Ethereum Sepolia) or a mainnet (e.g. Ethereum Mainnet).
 
-### Quick Start
+### Quick Start (Local Testing)
 
 1. **Set up your environment:**
    ```bash
@@ -115,17 +134,26 @@ You can deploy to a local anvil network (as done in the test), a fork of a real 
    # Edit .env with your values
    ```
 
-2. **Start a local blockchain (if testing locally):**
+2. **Start a local blockchain (not needed if using remote rpc):**
    ```bash
    anvil
    ```
 
-3. **Deploy:**
+3. **Deploy the contracts:**
    ```bash
    ./script/deploy.sh
    ```
 
-That's it! The script will deploy your contract and show you the addresses.
+That's it! The script will deploy your contracts and show you the addresses.
+
+### Production Deployment
+
+For production deployments, ensure you have:
+
+1. **A secure wallet** with sufficient ETH for gas fees
+2. **A valid manager address** (preferably a multisig wallet)
+3. **The correct RPC URL** for your target network
+4. **Tested thoroughly** on testnets first
 
 ### What You Need
 
@@ -143,10 +171,10 @@ The proxy gets initialized with your manager address, and that's it!
 
 ### Configuration
 
-All settings go in your `.env` file:
+All settings go in your `.env` file. Copy `env.example` to `.env` and customize:
 
 ```bash
-# Required: Who manages the contract
+# Required: Who manages the contract (use a multisig for production)
 MANAGER_ADDRESS=0x1234567890123456789012345678901234567890
 
 # Optional: Where to deploy (defaults to localhost)
@@ -156,6 +184,12 @@ RPC_URL=http://localhost:8545
 MNEMONIC="your twelve word mnemonic phrase here"
 ACCOUNT_INDEX=0
 ```
+
+**Example configurations:**
+
+- **Local testing**: Use Anvil's default account (no mnemonic needed)
+- **Testnet**: Use a test wallet with testnet ETH
+- **Mainnet**: Use a secure multisig wallet
 
 ### Deployment Process
 
@@ -198,6 +232,29 @@ The deployment script:
 - **Monitor events** - Watch for unexpected contract changes
 - **Keep keys secure** - Store private keys and mnemonics safely
 
+## Quick Reference
+
+### Common Commands
+```bash
+# Build contracts
+forge build
+
+# Run tests
+forge test
+
+# Deploy locally
+anvil
+./script/deploy.sh
+
+# Run specific test
+forge test --match-test test_setThresholdEncryptionKey
+```
+
+### Important Addresses
+- **Proxy Contract**: The address users interact with (never changes)
+- **Implementation Contract**: The actual contract logic (can be upgraded)
+- **Manager**: The address that can update committees and keys
+
 ## Getting Help
-- Review the [timeboost-contract README](https://github.com/EspressoSystems/timeboost/tree/main/timeboost-contract/README.md) in the rust repo for integration questions
+- Review the [timeboost-contract README](https://github.com/EspressoSystems/timeboost/tree/main/timeboost-contract/README.md) in the Rust repo for integration questions
 - Check the troubleshooting section above for deployment issues
