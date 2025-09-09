@@ -5,6 +5,13 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
+/// @title KeyManager
+/// @notice The KeyManager contract is responsible for managing the keys for the Timeboost protocol.
+/// @notice It is used to set the threshold encryption key, create committees, and prune old committees.
+/// @notice It is also used to get the current committee id and the committee by id.
+/// @notice Only the admin can set the manager.
+/// @notice The manager can set the threshold encryption key, create committees, and prune old committees.
+/// @notice The contract is upgradeable and can be upgraded by the admin.
 contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     struct CommitteeMember {
         /// @notice public key for consensus votes, also used as the primary label for a node
@@ -106,7 +113,7 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      * @notice This function is used to initialize the contract.
      * @dev Reverts if the manager is the zero address.
      * @dev Assumes that the manager is valid.
-     * @dev This must be called once when the contract is first deployed.
+     * @dev This must be called once when the contract is first deployed, in the same transaction as the proxy deployment.
      * @param initialManager The initial manager.
      */
     function initialize(address initialManager) external initializer {
