@@ -17,5 +17,9 @@ jobs:
           uses: foundry-rs/foundry-toolchain@v1
         - name: Lint Solidity code
           run: forge lint
+        - name: Deployment Dry Run
+          run: |
+            export MANAGER_ADDRESS=0x1234567890123456789012345678901234567890
+            forge script script/DeployKeyManager.s.sol:DeployKeyManager --dry-run
         - name: Run contract tests
           run: forge test -vvv --summary
