@@ -15,5 +15,7 @@ jobs:
             fetch-depth: 0
         - name: Install Foundry
           uses: foundry-rs/foundry-toolchain@v1
+        - name: Lint Solidity code
+          run: forge lint
         - name: Run contract tests
-          run: forge test -vvv
+          run: forge test -vvv --summary
