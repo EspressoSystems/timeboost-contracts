@@ -58,7 +58,7 @@ echo
 export MANAGER_ADDRESS=$MANAGER_ADDRESS
 
 # Build forge command with dry-run support
-FORGE_CMD="forge script script/DeployKeyManager.s.sol:DeployKeyManager --rpc-url $RPC_URL"
+FORGE_CMD="forge script script/DeployKeyManager.s.sol:DeployKeyManager"
 
 if [ "$DRY_RUN" = true ]; then
     echo "Running simulation (dry run)"
@@ -70,7 +70,7 @@ else
         exit 1
     fi
     echo "Network is reachable. Running deployment..."
-    FORGE_CMD="$FORGE_CMD --broadcast"
+    FORGE_CMD="$FORGE_CMD  --rpc-url $RPC_URL --broadcast"
 fi
 
 # fix mnemonic quotes
