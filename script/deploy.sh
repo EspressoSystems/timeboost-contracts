@@ -57,14 +57,6 @@ echo
 # Set environment variable for the script
 export MANAGER_ADDRESS=$MANAGER_ADDRESS
 
-echo "Testing RPC connection..."
-if ! curl -s -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' "$RPC_URL" > /dev/null; then
-    echo "Can't connect to $RPC_URL"
-    exit 1
-fi
-
-echo "Running..."
-
 # Build forge command with dry-run support
 FORGE_CMD="forge script script/DeployKeyManager.s.sol:DeployKeyManager --rpc-url $RPC_URL"
 
@@ -72,6 +64,12 @@ if [ "$DRY_RUN" = true ]; then
     echo "Running simulation (dry run)"
     FORGE_CMD="$FORGE_CMD -- --dry-run"
 else
+    echo "Testing blockchain network connection..."
+    if ! curl -s -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' "$RPC_URL" > /dev/null; then
+        echo "Can't connect to $RPC_URL"
+        exit 1
+    fi
+    echo "Network is reachable. Running deployment..."
     FORGE_CMD="$FORGE_CMD --broadcast"
 fi
 
