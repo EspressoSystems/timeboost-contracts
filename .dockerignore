@@ -1,0 +1,36 @@
+# Git files
+.git
+.gitignore
+
+# Docker files
+Dockerfile*
+docker-compose.yml
+.dockerignore
+
+# Build artifacts
+out/
+cache/
+target/
+
+# Environment files (we'll pass these as environment variables)
+.env
+.env.*
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Documentation (we'll generate this fresh)
+docs/
+
+# Large library files (we'll install these in the container)
+lib/
+
+# Logs
+*.log

@@ -1,0 +1,41 @@
+# Development environment for Timeboost Contracts
+# Use Ubuntu as base
+FROM ubuntu:22.04
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    bash \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Foundry
+RUN curl -L https://foundry.paradigm.xyz | bash
+RUN /root/.foundry/bin/foundryup
+
+# Verify installation
+RUN /root/.foundry/bin/forge --version
+
+# Add Foundry to PATH
+ENV PATH="/root/.foundry/bin:${PATH}"
+
+# Set working directory
+WORKDIR /app
+
+# Copy project files
+COPY . .
+
+# Initialize git (needed for forge install)
+RUN git init
+
+# Install dependencies
+RUN forge install
+
+# Make scripts executable
+RUN chmod +x script/deploy.sh
+
+# Set default command
+CMD ["bash"]
+
+

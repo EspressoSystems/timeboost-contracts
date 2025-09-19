@@ -1,0 +1,56 @@
+services:
+  # Our main development environment
+  dev:
+    # Build the image directly
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.dev
+    image: timeboost-contracts:latest
+    
+    volumes:
+      - ../src:/app/src           # Source code
+      - ../script:/app/script     # Deployment scripts
+      - ../test:/app/test         # Test files
+      - ../lib:/app/lib           # Dependencies (forge-std, openzeppelin, etc.)
+      - ../broadcast:/app/broadcast  # Deployment transaction logs
+      - ../foundry.toml:/app/foundry.toml  # Foundry configuration
+      - ../README.md:/app/README.md        # Documentation
+    
+    env_file:
+      - docker.env
+    
+    # Set the working directory
+    working_dir: /app
+    
+    # Keep the container running and allow interaction
+    stdin_open: true
+    tty: true
+    
+    command: bash
+    
+    depends_on:
+      - anvil
+
+  # Local Ethereum blockchain for testing
+  anvil:
+    # Use the same base image
+    image: timeboost-contracts:latest
+    
+    # Command to run when container starts
+    command: anvil --host 0.0.0.0 --port 8545
+    
+    # Expose port 8545 to your computer
+    ports:
+      - "8545:8545"
+    
+    # Health check for anvil
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8545"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    
+    # Keep container running
+    stdin_open: true
+    tty: true

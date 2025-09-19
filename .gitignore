@@ -10,8 +10,9 @@ out/
 # Docs
 docs/
 
-# Dotenv file
+# Dotenv files
 .env
+docker/docker.env
 
 # Lock files
 foundry.lock
