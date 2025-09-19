@@ -31,6 +31,8 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         uint64 id;
         /// @notice wall clock time since unix epoch for this committee to be active
         uint64 effectiveTimestamp;
+        /// @notice block number of the block in which this committee is registered
+        uint256 registeredBlockNumber;
         /// @notice constituting members and their key materials
         CommitteeMember[] members;
     }
@@ -194,8 +196,12 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
         if (nextCommitteeId == type(uint64).max) revert CommitteeIdOverflow();
 
-        committees[nextCommitteeId] =
-            Committee({id: nextCommitteeId, effectiveTimestamp: effectiveTimestamp, members: members});
+        committees[nextCommitteeId] = Committee({
+            id: nextCommitteeId,
+            effectiveTimestamp: effectiveTimestamp,
+            registeredBlockNumber: block.number,
+            members: members
+        });
 
         nextCommitteeId++;
 
