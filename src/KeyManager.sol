@@ -5,6 +5,8 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+
 /// @title KeyManager
 /// @notice The KeyManager contract is responsible for managing the keys for the Timeboost protocol.
 /// @notice It is used to set the threshold encryption key, create committees, and prune old committees.
@@ -22,6 +24,8 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         bytes dkgKey;
         /// @notice a network address: `ip:port` or `hostname:port`
         string networkAddress;
+        /// @notice a http address: `http://<address>:<port>`
+        string batchPosterAddress;
     }
 
     /// @notice The consensus committee rotates with each epoch, registered by contract `manager`.
@@ -279,5 +283,43 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         _oldestStoredCommitteeId = upToCommitteeId + 1;
 
         emit CommitteesPruned(oldOldestStored, upToCommitteeId);
+    }
+
+    /**
+     * @notice Verify the signatures over the batch data hash.
+     * @param dataHash Keccak hash over the batch data sent to sequencer inbox contract.
+     * @param signatures Signatures over the batch datas keccak hash.
+     */
+    function verifyBatchSignatures(bytes32 dataHash, bytes memory signatures) public view returns (bool) {
+        require(signatures.length % 65 == 0, "Invalid signatures length");
+        uint256 signatureCount = signatures.length / 65;
+
+        uint64 committeeId = currentCommitteeId();
+        Committee memory committee = committees[committeeId];
+
+        CommitteeMember[] memory members = committee.members;
+        address[] memory addresses = new address[](members.length);
+        for (uint64 i = 0; i < members.length; i++) {
+            addresses[i] = address(uint160(uint256(keccak256(members[i].sigKey))));
+        }
+
+        uint64 validSigs = 0;
+        for (uint64 i = 0; i < signatureCount; i++) {
+            uint256 start = i * 65;
+            bytes memory signature = new bytes(65);
+
+            for (uint256 j = 0; j < 65; j++) {
+                signature[j] = signatures[start + j];
+            }
+
+            address signer = ECDSA.recover(dataHash, signature);
+            for (uint64 j = 0; j < addresses.length; j++) {
+                if (signer == addresses[j]) {
+                    validSigs++;
+                    break;
+                }
+            }
+        }
+        return validSigs >= 2 * (members.length - 1) / 3 + 1;
     }
 }
