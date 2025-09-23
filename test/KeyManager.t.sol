@@ -28,6 +28,7 @@ contract KeyManagerTest is Test {
             sigKey: randomBytes,
             dhKey: randomBytes,
             dkgKey: randomBytes,
+            sigKeyAddress: address(0),
             networkAddress: "127.0.0.1:8080",
             batchPosterAddress: "http://127.0.0.1:8547"
         });

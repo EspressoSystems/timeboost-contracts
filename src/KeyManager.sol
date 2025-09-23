@@ -22,6 +22,8 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         bytes dhKey;
         /// @notice public key for encrypting DKG-specific payloads
         bytes dkgKey;
+        /// @notice address for signing public key
+        address sigKeyAddress;
         /// @notice a network address: `ip:port` or `hostname:port`
         string networkAddress;
         /// @notice a http address: `http://<address>:<port>`
@@ -97,6 +99,7 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     uint64 private _oldestStoredCommitteeId;
     /// @notice The gap for future upgrades.
     uint256[48] private __gap;
+    mapping(address => bool) private addresses;
 
     /// @notice Modifier to check if the caller is the manager.
     modifier onlyManager() {
@@ -298,10 +301,6 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         Committee memory committee = committees[committeeId];
 
         CommitteeMember[] memory members = committee.members;
-        address[] memory addresses = new address[](members.length);
-        for (uint64 i = 0; i < members.length; i++) {
-            addresses[i] = address(uint160(uint256(keccak256(members[i].sigKey))));
-        }
 
         uint64 validSigs = 0;
         for (uint64 i = 0; i < signatureCount; i++) {
@@ -313,8 +312,8 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
             }
 
             address signer = ECDSA.recover(dataHash, signature);
-            for (uint64 j = 0; j < addresses.length; j++) {
-                if (signer == addresses[j]) {
+            for (uint64 j = 0; j < members.length; j++) {
+                if (signer == members[j].sigKeyAddress) {
                     validSigs++;
                     break;
                 }
