@@ -129,7 +129,7 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         if (initialManager == address(0)) {
             revert InvalidAddress();
         }
-        __Ownable_init(msg.sender);
+        // __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
         manager = initialManager;
     }
@@ -304,11 +304,11 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
         uint64 validSigs = 0;
         for (uint64 i = 0; i < signatureCount; i++) {
-            uint256 start = i * 65;
+            uint256 offset = i * 65;
             bytes memory signature = new bytes(65);
 
             for (uint256 j = 0; j < 65; j++) {
-                signature[j] = signatures[start + j];
+                signature[j] = signatures[offset + j];
             }
 
             address signer = ECDSA.recover(dataHash, signature);
