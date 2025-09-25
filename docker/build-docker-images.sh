@@ -104,25 +104,20 @@ echo "Platform: ${platform}"
 echo ""
 
 build_base_image() {
-  echo "Building base image..."
-  
   if [[ "$platform" == *","* ]]; then
     echo "Multi-platform build for: ${platform}"
-    docker buildx build \
-      --platform "${platform}" \
-      --file "Dockerfile.dev" \
-      --tag "timeboost-contracts:latest" \
-      --load \
-      ..
   else
     echo "Single platform build for: ${platform}"
-    docker buildx build \
+  fi
+
+  echo "Building base image(s)..."
+
+  docker buildx build \
       --platform "${platform}" \
       --file "Dockerfile.dev" \
       --tag "timeboost-contracts:latest" \
       --load \
       ..
-  fi
   
   echo "Base image built successfully"
   echo ""
