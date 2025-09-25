@@ -5,6 +5,8 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+
 /// @title KeyManager
 /// @notice The KeyManager contract is responsible for managing the keys for the Timeboost protocol.
 /// @notice It is used to set the threshold encryption key, create committees, and prune old committees.
@@ -20,8 +22,12 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         bytes dhKey;
         /// @notice public key for encrypting DKG-specific payloads
         bytes dkgKey;
+        /// @notice address for signing public key
+        address sigKeyAddress;
         /// @notice a network address: `ip:port` or `hostname:port`
         string networkAddress;
+        /// @notice a http address: `http://<address>:<port>`
+        string batchPosterAddress;
     }
 
     /// @notice The consensus committee rotates with each epoch, registered by contract `manager`.
@@ -93,6 +99,7 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     uint64 private _oldestStoredCommitteeId;
     /// @notice The gap for future upgrades.
     uint256[48] private __gap;
+    mapping(address => bool) private addresses;
 
     /// @notice Modifier to check if the caller is the manager.
     modifier onlyManager() {
@@ -122,7 +129,7 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         if (initialManager == address(0)) {
             revert InvalidAddress();
         }
-        __Ownable_init(msg.sender);
+        // __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
         manager = initialManager;
     }
@@ -279,5 +286,39 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         _oldestStoredCommitteeId = upToCommitteeId + 1;
 
         emit CommitteesPruned(oldOldestStored, upToCommitteeId);
+    }
+
+    /**
+     * @notice Verify the signatures over the batch data hash.
+     * @param dataHash Keccak hash over the batch data sent to sequencer inbox contract.
+     * @param signatures Signatures over the batch datas keccak hash.
+     */
+    function verifyBatchSignatures(bytes32 dataHash, bytes memory signatures) public view returns (bool) {
+        require(signatures.length % 65 == 0, "Invalid signatures length");
+        uint256 signatureCount = signatures.length / 65;
+
+        uint64 committeeId = currentCommitteeId();
+        Committee memory committee = committees[committeeId];
+
+        CommitteeMember[] memory members = committee.members;
+
+        uint64 validSigs = 0;
+        for (uint64 i = 0; i < signatureCount; i++) {
+            uint256 offset = i * 65;
+            bytes memory signature = new bytes(65);
+
+            for (uint256 j = 0; j < 65; j++) {
+                signature[j] = signatures[offset + j];
+            }
+
+            address signer = ECDSA.recover(dataHash, signature);
+            for (uint64 j = 0; j < members.length; j++) {
+                if (signer == members[j].sigKeyAddress) {
+                    validSigs++;
+                    break;
+                }
+            }
+        }
+        return validSigs >= 2 * (members.length - 1) / 3 + 1;
     }
 }
