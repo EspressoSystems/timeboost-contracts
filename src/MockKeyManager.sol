@@ -1,6 +1,9 @@
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.13;
+
 /// @title MockKeyVerifier
 /// @notice A mock contract for testing that always returns true for batch signature verification.
-contract MockKeyVerifier {
+contract MockKeyManager {
     /// @notice Verifies batch signatures over a data hash, always returning true for testing purposes.
     /// @param dataHash Keccak hash over the batch data.
     /// @param signatures Signatures over the batch data's keccak hash.
