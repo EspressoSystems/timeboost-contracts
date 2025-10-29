@@ -294,6 +294,7 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      * @param signatures Signatures over the batch datas keccak hash.
      */
     function verifyBatchSignatures(bytes32 dataHash, bytes memory signatures) public view returns (bool) {
+        require(dataHash != bytes32(0), "Data hash cannot be zero");
         require(signatures.length % 65 == 0, "Invalid signatures length");
         uint256 signatureCount = signatures.length / 65;
         if (signatureCount == 0) return false;
