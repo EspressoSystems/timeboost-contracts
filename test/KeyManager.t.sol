@@ -1,4 +1,4 @@
-    // SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
 import {Test} from "forge-std/Test.sol";
@@ -19,11 +19,6 @@ contract KeyManagerTest is Test {
     address public addr1;
     address public addr2;
     address public addr3;
-
-    // 65-byte uncompressed pubkeys
-    bytes public pub1;
-    bytes public pub2;
-    bytes public pub3;
 
     function setUp() public {
         owner = makeAddr("owner");

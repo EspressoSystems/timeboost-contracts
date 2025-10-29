@@ -8,9 +8,14 @@ contract MockKeyManager {
     /// @dev    Both parameters are intentionally unused.
     /// @return true
     function verifyBatchSignatures(
-        bytes32 /* dataHash */,
+        bytes32,
+        /* dataHash */
         bytes memory /* signatures */
-    ) public pure returns (bool) {
+    )
+        public
+        pure
+        returns (bool)
+    {
         return true;
     }
 }
