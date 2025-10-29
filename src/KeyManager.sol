@@ -99,7 +99,6 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     uint64 private _oldestStoredCommitteeId;
     /// @notice The gap for future upgrades.
     uint256[48] private __gap;
-    mapping(address => bool) private addresses;
 
     /// @notice Modifier to check if the caller is the manager.
     modifier onlyManager() {
