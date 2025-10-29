@@ -11,6 +11,20 @@ contract KeyManagerTest is Test {
     address public manager;
     address public owner;
 
+    uint256 private pk1 = uint256(keccak256("member1"));
+    uint256 private pk2 = uint256(keccak256("member2"));
+    uint256 private pk3 = uint256(keccak256("member3"));
+
+    // Derived addresses
+    address public addr1;
+    address public addr2;
+    address public addr3;
+
+    // 65-byte uncompressed pubkeys
+    bytes public pub1;
+    bytes public pub2;
+    bytes public pub3;
+
     function setUp() public {
         owner = makeAddr("owner");
         manager = makeAddr("manager");
@@ -19,6 +33,10 @@ contract KeyManagerTest is Test {
         vm.prank(owner);
         ERC1967Proxy proxy = new ERC1967Proxy(address(keyManagerImpl), data);
         keyManagerProxy = KeyManager(address(proxy));
+
+        addr1 = vm.addr(pk1);
+        addr2 = vm.addr(pk2);
+        addr3 = vm.addr(pk3);
     }
 
     function createTestMembers() internal pure returns (KeyManager.CommitteeMember[] memory) {
@@ -32,6 +50,40 @@ contract KeyManagerTest is Test {
             networkAddress: "127.0.0.1:8080",
             batchPosterAddress: "http://127.0.0.1:8547"
         });
+        return members;
+    }
+
+    function createTestMembersMultiple() internal view returns (KeyManager.CommitteeMember[] memory) {
+        KeyManager.CommitteeMember[] memory members = new KeyManager.CommitteeMember[](3);
+        bytes memory randomBytes = abi.encodePacked("1");
+
+        members[0] = KeyManager.CommitteeMember({
+            sigKey: randomBytes,
+            dhKey: randomBytes,
+            dkgKey: randomBytes,
+            sigKeyAddress: addr1,
+            networkAddress: "127.0.0.1:8000",
+            batchPosterAddress: "http://127.0.0.1:8547"
+        });
+
+        members[1] = KeyManager.CommitteeMember({
+            sigKey: randomBytes,
+            dhKey: randomBytes,
+            dkgKey: randomBytes,
+            sigKeyAddress: addr2,
+            networkAddress: "127.0.0.1:8001",
+            batchPosterAddress: "http://127.0.0.1:8548"
+        });
+
+        members[2] = KeyManager.CommitteeMember({
+            sigKey: randomBytes,
+            dhKey: randomBytes,
+            dkgKey: randomBytes,
+            sigKeyAddress: addr3,
+            networkAddress: "127.0.0.1:8002",
+            batchPosterAddress: "http://127.0.0.1:8549"
+        });
+
         return members;
     }
 
@@ -288,5 +340,60 @@ contract KeyManagerTest is Test {
         vm.expectRevert(abi.encodeWithSelector(KeyManager.InvalidPruneRange.selector, 1, 0, 1));
         keyManagerProxy.pruneUntil(1);
         vm.stopPrank();
+    }
+
+    function test_verifySignatures_valid() public {
+        vm.startPrank(manager);
+
+        KeyManager.CommitteeMember[] memory committeeMembers = createTestMembersMultiple();
+        keyManagerProxy.setNextCommittee(uint64(block.timestamp), committeeMembers);
+
+        bytes32 dataHash = keccak256("hello world");
+
+        bytes memory signatures;
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk1, dataHash);
+        signatures = abi.encodePacked(signatures, r, s, v);
+
+        (v, r, s) = vm.sign(pk2, dataHash);
+        signatures = abi.encodePacked(signatures, r, s, v);
+
+        (v, r, s) = vm.sign(pk3, dataHash);
+        signatures = abi.encodePacked(signatures, r, s, v);
+
+        assertTrue(keyManagerProxy.verifyBatchSignatures(dataHash, signatures));
+    }
+
+    function test_verifySignatures_invalid() public {
+        vm.startPrank(manager);
+
+        KeyManager.CommitteeMember[] memory committeeMembers = createTestMembers();
+        keyManagerProxy.setNextCommittee(uint64(block.timestamp), committeeMembers);
+
+        bytes32 dataHash = keccak256("hello world");
+
+        bytes memory signatures;
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk1, dataHash);
+        signatures = abi.encodePacked(signatures, r, s, v);
+
+        assertFalse(keyManagerProxy.verifyBatchSignatures(dataHash, signatures));
+    }
+
+    function test_verifySameSignatures_invalid() public {
+        vm.startPrank(manager);
+
+        KeyManager.CommitteeMember[] memory committeeMembers = createTestMembersMultiple();
+        keyManagerProxy.setNextCommittee(uint64(block.timestamp), committeeMembers);
+
+        bytes32 dataHash = keccak256("hello world");
+
+        // pack the same signure multiple times
+        bytes memory signatures;
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk1, dataHash);
+        signatures = abi.encodePacked(signatures, r, s, v);
+        signatures = abi.encodePacked(signatures, r, s, v);
+        signatures = abi.encodePacked(signatures, r, s, v);
+
+        // same valid signature multiple times is expected to fail
+        assertFalse(keyManagerProxy.verifyBatchSignatures(dataHash, signatures));
     }
 }

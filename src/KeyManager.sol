@@ -129,7 +129,7 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         if (initialManager == address(0)) {
             revert InvalidAddress();
         }
-        // __Ownable_init(msg.sender);
+        _transferOwnership(msg.sender);
         __UUPSUpgradeable_init();
         manager = initialManager;
     }
@@ -296,6 +296,7 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     function verifyBatchSignatures(bytes32 dataHash, bytes memory signatures) public view returns (bool) {
         require(signatures.length % 65 == 0, "Invalid signatures length");
         uint256 signatureCount = signatures.length / 65;
+        if (signatureCount == 0) return false;
 
         uint64 committeeId = currentCommitteeId();
         Committee memory committee = committees[committeeId];
@@ -314,6 +315,8 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
             address signer = ECDSA.recover(dataHash, signature);
             for (uint64 j = 0; j < members.length; j++) {
                 if (signer == members[j].sigKeyAddress) {
+                    // remove the member, need to verify unique signatures
+                    delete members[j];
                     validSigs++;
                     break;
                 }
