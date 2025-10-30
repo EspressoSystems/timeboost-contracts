@@ -11,15 +11,6 @@ contract KeyManagerTest is Test {
     address public manager;
     address public owner;
 
-    uint256 private pk1 = uint256(keccak256("member1"));
-    uint256 private pk2 = uint256(keccak256("member2"));
-    uint256 private pk3 = uint256(keccak256("member3"));
-
-    // Derived addresses
-    address public addr1;
-    address public addr2;
-    address public addr3;
-
     function setUp() public {
         owner = makeAddr("owner");
         manager = makeAddr("manager");
@@ -28,10 +19,6 @@ contract KeyManagerTest is Test {
         vm.prank(owner);
         ERC1967Proxy proxy = new ERC1967Proxy(address(keyManagerImpl), data);
         keyManagerProxy = KeyManager(address(proxy));
-
-        addr1 = vm.addr(pk1);
-        addr2 = vm.addr(pk2);
-        addr3 = vm.addr(pk3);
     }
 
     function createTestMembers() internal pure returns (KeyManager.CommitteeMember[] memory) {
@@ -43,41 +30,28 @@ contract KeyManagerTest is Test {
             dkgKey: randomBytes,
             sigKeyAddress: address(0),
             networkAddress: "127.0.0.1:8080",
-            batchPosterAddress: "http://127.0.0.1:8547"
+            batchPosterAddress: "127.0.0.1:8547"
         });
         return members;
     }
 
-    function createTestMembersMultiple() internal view returns (KeyManager.CommitteeMember[] memory) {
-        KeyManager.CommitteeMember[] memory members = new KeyManager.CommitteeMember[](3);
+    function createTestMembersFromKeys(uint256[] memory keys)
+        internal
+        pure
+        returns (KeyManager.CommitteeMember[] memory)
+    {
+        KeyManager.CommitteeMember[] memory members = new KeyManager.CommitteeMember[](keys.length);
         bytes memory randomBytes = abi.encodePacked("1");
-
-        members[0] = KeyManager.CommitteeMember({
-            sigKey: randomBytes,
-            dhKey: randomBytes,
-            dkgKey: randomBytes,
-            sigKeyAddress: addr1,
-            networkAddress: "127.0.0.1:8000",
-            batchPosterAddress: "http://127.0.0.1:8547"
-        });
-
-        members[1] = KeyManager.CommitteeMember({
-            sigKey: randomBytes,
-            dhKey: randomBytes,
-            dkgKey: randomBytes,
-            sigKeyAddress: addr2,
-            networkAddress: "127.0.0.1:8001",
-            batchPosterAddress: "http://127.0.0.1:8548"
-        });
-
-        members[2] = KeyManager.CommitteeMember({
-            sigKey: randomBytes,
-            dhKey: randomBytes,
-            dkgKey: randomBytes,
-            sigKeyAddress: addr3,
-            networkAddress: "127.0.0.1:8002",
-            batchPosterAddress: "http://127.0.0.1:8549"
-        });
+        for (uint64 i = 0; i < keys.length; i++) {
+            members[i] = KeyManager.CommitteeMember({
+                sigKey: randomBytes,
+                dhKey: randomBytes,
+                dkgKey: randomBytes,
+                sigKeyAddress: vm.addr(keys[i]),
+                networkAddress: "127.0.0.1:8000",
+                batchPosterAddress: "127.0.0.1:8547"
+            });
+        }
 
         return members;
     }
@@ -337,58 +311,129 @@ contract KeyManagerTest is Test {
         vm.stopPrank();
     }
 
-    function test_verifySignatures_valid() public {
+    function test_verifySignaturesAllQuorum_valid() public {
         vm.startPrank(manager);
-
-        KeyManager.CommitteeMember[] memory committeeMembers = createTestMembersMultiple();
+        uint64 members = 3;
+        uint256[] memory keys = new uint256[](members);
+        for (uint64 i = 0; i < members; i++) {
+            keys[i] = uint256(keccak256(abi.encode(i)));
+        }
+        KeyManager.CommitteeMember[] memory committeeMembers = createTestMembersFromKeys(keys);
+        assertTrue(committeeMembers.length == members);
         keyManagerProxy.setNextCommittee(uint64(block.timestamp), committeeMembers);
 
         bytes32 dataHash = keccak256("hello world");
 
-        bytes memory signatures;
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk1, dataHash);
-        signatures = abi.encodePacked(signatures, r, s, v);
+        bytes[] memory signatures = new bytes[](members);
+        for (uint64 i = 0; i < members; i++) {
+            (uint8 v, bytes32 r, bytes32 s) = vm.sign(keys[i], dataHash);
+            signatures[i] = abi.encodePacked(r, s, v);
+        }
 
-        (v, r, s) = vm.sign(pk2, dataHash);
-        signatures = abi.encodePacked(signatures, r, s, v);
-
-        (v, r, s) = vm.sign(pk3, dataHash);
-        signatures = abi.encodePacked(signatures, r, s, v);
-
-        assertTrue(keyManagerProxy.verifyBatchSignatures(dataHash, signatures));
+        assertTrue(keyManagerProxy.verifyQuorumSignatures(dataHash, signatures));
     }
 
-    function test_verifySignatures_invalid() public {
+    function test_verifySignatures_invalidLength() public {
         vm.startPrank(manager);
 
-        KeyManager.CommitteeMember[] memory committeeMembers = createTestMembers();
+        uint64 members = 3;
+        uint256[] memory keys = new uint256[](members);
+        for (uint64 i = 0; i < members; i++) {
+            keys[i] = uint256(keccak256(abi.encode(i)));
+        }
+        KeyManager.CommitteeMember[] memory committeeMembers = createTestMembersFromKeys(keys);
+        assertTrue(committeeMembers.length == members);
         keyManagerProxy.setNextCommittee(uint64(block.timestamp), committeeMembers);
 
         bytes32 dataHash = keccak256("hello world");
 
-        bytes memory signatures;
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk1, dataHash);
-        signatures = abi.encodePacked(signatures, r, s, v);
+        bytes[] memory signatures = new bytes[](1);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(keys[0], dataHash);
+        signatures[0] = abi.encodePacked(r, s, v);
 
-        assertFalse(keyManagerProxy.verifyBatchSignatures(dataHash, signatures));
+        vm.expectRevert("Invalid signatures length");
+        keyManagerProxy.verifyQuorumSignatures(dataHash, signatures);
+    }
+
+    function test_verifySignaturesQuorum_valid() public {
+        vm.startPrank(manager);
+
+        uint64 members = 5;
+        uint256[] memory keys = new uint256[](members);
+        for (uint64 i = 0; i < members; i++) {
+            keys[i] = uint256(keccak256(abi.encode(i)));
+        }
+        KeyManager.CommitteeMember[] memory committeeMembers = createTestMembersFromKeys(keys);
+        assertTrue(committeeMembers.length == members);
+        keyManagerProxy.setNextCommittee(uint64(block.timestamp), committeeMembers);
+
+        bytes32 dataHash = keccak256("hello world");
+
+        bytes[] memory signatures = new bytes[](members);
+        for (uint64 i = 0; i < members; i++) {
+            // We have 5 members, pretend one node didn't sign, we should still have quorum
+            if (i == 0) {
+                signatures[i] = new bytes(0);
+            } else {
+                (uint8 v, bytes32 r, bytes32 s) = vm.sign(keys[i], dataHash);
+                signatures[i] = abi.encodePacked(r, s, v);
+            }
+        }
+
+        assertTrue(keyManagerProxy.verifyQuorumSignatures(dataHash, signatures));
+    }
+
+    function test_verifySignaturesNoQuorum_invalid() public {
+        vm.startPrank(manager);
+
+        uint64 members = 4;
+        uint256[] memory keys = new uint256[](members);
+        for (uint64 i = 0; i < members; i++) {
+            keys[i] = uint256(keccak256(abi.encode(i)));
+        }
+        KeyManager.CommitteeMember[] memory committeeMembers = createTestMembersFromKeys(keys);
+        assertTrue(committeeMembers.length == members);
+        keyManagerProxy.setNextCommittee(uint64(block.timestamp), committeeMembers);
+
+        bytes32 dataHash = keccak256("hello world");
+
+        bytes[] memory signatures = new bytes[](members);
+        for (uint64 i = 0; i < members; i++) {
+            // We have 4 members, skip two nodes
+            if (i == 0 || i == 2) {
+                signatures[i] = "";
+            } else {
+                (uint8 v, bytes32 r, bytes32 s) = vm.sign(keys[i], dataHash);
+                signatures[i] = abi.encodePacked(r, s, v);
+            }
+        }
+
+        // we dont have quorum, we only have 2/4 signatures
+        assertFalse(keyManagerProxy.verifyQuorumSignatures(dataHash, signatures));
     }
 
     function test_verifySameSignatures_invalid() public {
         vm.startPrank(manager);
 
-        KeyManager.CommitteeMember[] memory committeeMembers = createTestMembersMultiple();
+        uint64 members = 3;
+        uint256[] memory keys = new uint256[](members);
+        for (uint64 i = 0; i < members; i++) {
+            keys[i] = uint256(keccak256(abi.encode(i)));
+        }
+        KeyManager.CommitteeMember[] memory committeeMembers = createTestMembersFromKeys(keys);
+        assertTrue(committeeMembers.length == members);
         keyManagerProxy.setNextCommittee(uint64(block.timestamp), committeeMembers);
 
         bytes32 dataHash = keccak256("hello world");
 
-        // pack the same signure multiple times
-        bytes memory signatures;
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk1, dataHash);
-        signatures = abi.encodePacked(signatures, r, s, v);
-        signatures = abi.encodePacked(signatures, r, s, v);
-        signatures = abi.encodePacked(signatures, r, s, v);
+        bytes[] memory signatures = new bytes[](members);
+        for (uint64 i = 0; i < members; i++) {
+            // use the same signature for all members
+            (uint8 v, bytes32 r, bytes32 s) = vm.sign(keys[0], dataHash);
+            signatures[i] = abi.encodePacked(r, s, v);
+        }
 
         // same valid signature multiple times is expected to fail
-        assertFalse(keyManagerProxy.verifyBatchSignatures(dataHash, signatures));
+        assertFalse(keyManagerProxy.verifyQuorumSignatures(dataHash, signatures));
     }
 }

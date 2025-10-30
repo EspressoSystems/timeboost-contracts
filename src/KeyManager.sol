@@ -4,8 +4,7 @@ pragma solidity ^0.8.13;
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 
 /// @title KeyManager
 /// @notice The KeyManager contract is responsible for managing the keys for the Timeboost protocol.
@@ -26,7 +25,7 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         address sigKeyAddress;
         /// @notice a network address: `ip:port` or `hostname:port`
         string networkAddress;
-        /// @notice a http address: `http://<address>:<port>`
+        /// @notice the url for batch posters address: `ip:port` or `hostname:port`
         string batchPosterAddress;
     }
 
@@ -289,39 +288,28 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
     /**
      * @notice Verify the signatures over the batch data hash.
+     * The method expects the signatures to be ordered to their corresponding commitee member
      * @param dataHash Keccak hash over the batch data sent to sequencer inbox contract.
-     * @param signatures Signatures over the batch datas keccak hash.
+     * @param signatures Signatures over the batch posters data keccak hash.
      */
-    function verifyBatchSignatures(bytes32 dataHash, bytes memory signatures) public view returns (bool) {
+    function verifyQuorumSignatures(bytes32 dataHash, bytes[] calldata signatures) public view returns (bool) {
         require(dataHash != bytes32(0), "Data hash cannot be zero");
-        require(signatures.length % 65 == 0, "Invalid signatures length");
-        uint256 signatureCount = signatures.length / 65;
-        if (signatureCount == 0) return false;
 
-        uint64 committeeId = currentCommitteeId();
-        Committee memory committee = committees[committeeId];
-
-        CommitteeMember[] memory members = committee.members;
+        // Get current committee information
+        CommitteeMember[] memory members = committees[currentCommitteeId()].members;
+        uint256 committeeLength = members.length;
+        require(signatures.length == committeeLength, "Invalid signatures length");
 
         uint64 validSigs = 0;
-        for (uint64 i = 0; i < signatureCount; i++) {
-            uint256 offset = i * 65;
-            bytes memory signature = new bytes(65);
-
-            for (uint256 j = 0; j < 65; j++) {
-                signature[j] = signatures[offset + j];
-            }
-
-            address signer = ECDSA.recover(dataHash, signature);
-            for (uint64 j = 0; j < members.length; j++) {
-                if (signer == members[j].sigKeyAddress) {
-                    // remove the member, need to verify unique signatures
-                    delete members[j];
-                    validSigs++;
-                    break;
+        for (uint64 i = 0; i < committeeLength; i++) {
+            bool valid = SignatureChecker.isValidSignatureNow(members[i].sigKeyAddress, dataHash, signatures[i]);
+            if (valid) {
+                validSigs++;
+                if (validSigs >= 2 * (committeeLength - 1) / 3 + 1) {
+                    return true;
                 }
             }
         }
-        return validSigs >= 2 * (members.length - 1) / 3 + 1;
+        return false;
     }
 }
