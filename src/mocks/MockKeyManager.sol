@@ -7,7 +7,7 @@ contract MockKeyManager {
     /// @notice Verifies batch signatures over a data hash, always returning true for testing purposes.
     /// @dev    Both parameters are intentionally unused.
     /// @return true
-    function verifyBatchSignatures(
+    function verifyQuorumSignatures(
         bytes32,
         /* dataHash */
         bytes memory /* signatures */
