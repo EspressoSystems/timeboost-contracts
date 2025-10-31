@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 
 /// @title KeyManager
 /// @notice The KeyManager contract is responsible for managing the keys for the Timeboost protocol.
@@ -20,8 +21,12 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         bytes dhKey;
         /// @notice public key for encrypting DKG-specific payloads
         bytes dkgKey;
+        /// @notice address for signing public key
+        address sigKeyAddress;
         /// @notice a network address: `ip:port` or `hostname:port`
         string networkAddress;
+        /// @notice the url for batch posters address: `ip:port` or `hostname:port`
+        string batchPosterAddress;
     }
 
     /// @notice The consensus committee rotates with each epoch, registered by contract `manager`.
@@ -122,7 +127,7 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         if (initialManager == address(0)) {
             revert InvalidAddress();
         }
-        __Ownable_init(msg.sender);
+        _transferOwnership(msg.sender);
         __UUPSUpgradeable_init();
         manager = initialManager;
     }
@@ -279,5 +284,32 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         _oldestStoredCommitteeId = upToCommitteeId + 1;
 
         emit CommitteesPruned(oldOldestStored, upToCommitteeId);
+    }
+
+    /**
+     * @notice Verify the signatures over the batch data hash.
+     * The method expects the signatures to be ordered to their corresponding commitee member
+     * @param dataHash Keccak hash over the batch data sent to sequencer inbox contract.
+     * @param signatures Signatures over the batch posters data keccak hash.
+     */
+    function verifyQuorumSignatures(bytes32 dataHash, bytes[] calldata signatures) public view returns (bool) {
+        require(dataHash != bytes32(0), "Data hash cannot be zero");
+
+        // Get current committee information
+        CommitteeMember[] memory members = committees[currentCommitteeId()].members;
+        uint256 committeeLength = members.length;
+        require(signatures.length == committeeLength, "Invalid signatures length");
+
+        uint64 validSigs = 0;
+        for (uint64 i = 0; i < committeeLength; i++) {
+            bool valid = SignatureChecker.isValidSignatureNow(members[i].sigKeyAddress, dataHash, signatures[i]);
+            if (valid) {
+                validSigs++;
+                if (validSigs >= 2 * (committeeLength - 1) / 3 + 1) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
