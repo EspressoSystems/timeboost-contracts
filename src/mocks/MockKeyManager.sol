@@ -10,7 +10,7 @@ contract MockKeyManager {
     function verifyQuorumSignatures(
         bytes32,
         /* dataHash */
-        bytes memory /* signatures */
+        bytes[] calldata /* signatures */
     )
         public
         pure
