@@ -3,8 +3,7 @@ pragma solidity ^0.8.13;
 
 import {Test} from "forge-std/Test.sol";
 import {KeyManager} from "../src/KeyManager.sol";
-import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract KeyManagerTest is Test {
     KeyManager public keyManagerProxy;
@@ -139,7 +138,8 @@ contract KeyManagerTest is Test {
 
     function test_revertWhenNotOwner_setManager() public {
         vm.startPrank(manager);
-        vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, manager));
+        vm.expectRevert(abi.encode("Ownable: caller is not the owner"));
+        // vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, manager));
         keyManagerProxy.setManager(manager);
         vm.stopPrank();
     }
