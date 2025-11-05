@@ -294,6 +294,7 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      */
     function verifyQuorumSignatures(bytes32 dataHash, bytes[] calldata signatures) public view returns (bool) {
         require(dataHash != bytes32(0), "Data hash cannot be zero");
+        require(signatures.length > 0, "Signatures length cannot be empty");
 
         // Get current committee information
         CommitteeMember[] memory members = committees[currentCommitteeId()].members;

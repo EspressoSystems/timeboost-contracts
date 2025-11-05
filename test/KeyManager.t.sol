@@ -436,4 +436,24 @@ contract KeyManagerTest is Test {
         // same valid signature multiple times is expected to fail
         assertFalse(keyManagerProxy.verifyQuorumSignatures(dataHash, signatures));
     }
+
+    function test_verifyEmptySignatures_invalid() public {
+        vm.startPrank(manager);
+
+        uint64 members = 3;
+        uint256[] memory keys = new uint256[](members);
+        for (uint64 i = 0; i < members; i++) {
+            keys[i] = uint256(keccak256(abi.encode(i)));
+        }
+        KeyManager.CommitteeMember[] memory committeeMembers = createTestMembersFromKeys(keys);
+        assertTrue(committeeMembers.length == members);
+        keyManagerProxy.setNextCommittee(uint64(block.timestamp), committeeMembers);
+
+        bytes32 dataHash = keccak256("hello world");
+
+        bytes[] memory signatures = new bytes[](0);
+
+        vm.expectRevert("Signatures length cannot be empty");
+        keyManagerProxy.verifyQuorumSignatures(dataHash, signatures);
+    }
 }
