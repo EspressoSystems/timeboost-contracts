@@ -62,7 +62,6 @@ FORGE_CMD="forge script script/DeployKeyManager.s.sol:DeployKeyManager"
 
 if [ "$DRY_RUN" = true ]; then
     echo "Running simulation (dry run)"
-    FORGE_CMD="$FORGE_CMD -- --dry-run"
 else
     echo "Testing blockchain network connection..."
     if ! curl -s -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' "$RPC_URL" > /dev/null; then
@@ -70,7 +69,7 @@ else
         exit 1
     fi
     echo "Network is reachable. Running deployment..."
-    FORGE_CMD="$FORGE_CMD  --rpc-url $RPC_URL --broadcast"
+    FORGE_CMD="$FORGE_CMD --rpc-url $RPC_URL --broadcast"
 fi
 
 # fix mnemonic quotes
