@@ -351,7 +351,9 @@ contract KeyManagerTest is Test {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(keys[0], dataHash);
         signatures[0] = abi.encodePacked(r, s, v);
 
-        vm.expectRevert("Invalid signatures length");
+        vm.expectRevert(
+            abi.encodeWithSelector(KeyManager.CommitteeAndSignatureLengthMismatch.selector, members, signatures.length)
+        );
         keyManagerProxy.verifyQuorumSignatures(dataHash, signatures);
     }
 
@@ -453,7 +455,7 @@ contract KeyManagerTest is Test {
 
         bytes[] memory signatures = new bytes[](0);
 
-        vm.expectRevert("Signatures length cannot be empty");
+        vm.expectRevert(abi.encodeWithSelector(KeyManager.EmptySignatures.selector));
         keyManagerProxy.verifyQuorumSignatures(dataHash, signatures);
     }
 }

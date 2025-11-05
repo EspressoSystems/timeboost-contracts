@@ -85,6 +85,12 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     error CannotRemoveRecentCommittees();
     /// @notice Thrown when pruning with invalid range.
     error InvalidPruneRange(uint64 upToCommitteeId, uint64 oldestStored, uint64 nextCommitteeId);
+    /// @notice Thrown when data hash is emty
+    error EmptyDataHash();
+    /// @notice Thrown when signature length is 0
+    error EmptySignatures();
+    /// @notice Thrown when signature length does not equal committee length
+    error CommitteeAndSignatureLengthMismatch(uint256 committeeLength, uint256 signatureLength);
 
     /// @notice The threshold encryption key for the committee.
     bytes public thresholdEncryptionKey;
@@ -293,13 +299,19 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      * @param signatures Signatures over the batch posters data keccak hash.
      */
     function verifyQuorumSignatures(bytes32 dataHash, bytes[] calldata signatures) public view returns (bool) {
-        require(dataHash != bytes32(0), "Data hash cannot be zero");
-        require(signatures.length > 0, "Signatures length cannot be empty");
+        if (dataHash == bytes32(0)) {
+            revert EmptyDataHash();
+        }
+        if (signatures.length == 0) {
+            revert EmptySignatures();
+        }
 
         // Get current committee information
         CommitteeMember[] memory members = committees[currentCommitteeId()].members;
         uint256 committeeLength = members.length;
-        require(signatures.length == committeeLength, "Invalid signatures length");
+        if (signatures.length != committeeLength) {
+            revert CommitteeAndSignatureLengthMismatch(committeeLength, signatures.length);
+        }
 
         uint64 validSigs = 0;
         for (uint64 i = 0; i < committeeLength; i++) {
