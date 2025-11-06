@@ -17,8 +17,6 @@ jobs:
           uses: foundry-rs/foundry-toolchain@v1
         - name: Show version
           run: forge --version
-        - name: Install dependencies
-          run: forge install foundry-rs/forge-std
         - name: Lint Solidity code
           run: forge lint
         - name: Deployment Dry Run
