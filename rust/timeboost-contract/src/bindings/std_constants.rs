@@ -22,22 +22,22 @@ pub mod StdConstants {
     /// The creation / init bytecode of the contract.
     ///
     /// ```text
-    ///0x608060405234601d57600e6021565b603e602c823930815050603e90f35b6027565b60405190565b5f80fdfe60806040525f80fdfea2646970667358221220948e98258232f34d43024bcf20a56ebc46b92d12684dd1db544ff4fcd1b30ea564736f6c634300081e0033
+    ///0x6080806040523460175760399081601c823930815050f35b5f80fdfe5f80fdfea264697066735822122073741841ba168f19c3195d5bfa558a5d47dfdfb64cabeae710bbfcf3d95ebbd664736f6c634300081e0033
     /// ```
     #[rustfmt::skip]
     #[allow(clippy::all)]
     pub static BYTECODE: alloy_sol_types::private::Bytes = alloy_sol_types::private::Bytes::from_static(
-        b"`\x80`@R4`\x1DW`\x0E`!V[`>`,\x8290\x81PP`>\x90\xF3[`'V[`@Q\x90V[_\x80\xFD\xFE`\x80`@R_\x80\xFD\xFE\xA2dipfsX\"\x12 \x94\x8E\x98%\x822\xF3MC\x02K\xCF \xA5n\xBCF\xB9-\x12hM\xD1\xDBTO\xF4\xFC\xD1\xB3\x0E\xA5dsolcC\0\x08\x1E\x003",
+        b"`\x80\x80`@R4`\x17W`9\x90\x81`\x1C\x8290\x81PP\xF3[_\x80\xFD\xFE_\x80\xFD\xFE\xA2dipfsX\"\x12 st\x18A\xBA\x16\x8F\x19\xC3\x19][\xFAU\x8A]G\xDF\xDF\xB6L\xAB\xEA\xE7\x10\xBB\xFC\xF3\xD9^\xBB\xD6dsolcC\0\x08\x1E\x003",
     );
     /// The runtime bytecode of the contract, as deployed on the network.
     ///
     /// ```text
-    ///0x60806040525f80fdfea2646970667358221220948e98258232f34d43024bcf20a56ebc46b92d12684dd1db544ff4fcd1b30ea564736f6c634300081e0033
+    ///0x5f80fdfea264697066735822122073741841ba168f19c3195d5bfa558a5d47dfdfb64cabeae710bbfcf3d95ebbd664736f6c634300081e0033
     /// ```
     #[rustfmt::skip]
     #[allow(clippy::all)]
     pub static DEPLOYED_BYTECODE: alloy_sol_types::private::Bytes = alloy_sol_types::private::Bytes::from_static(
-        b"`\x80`@R_\x80\xFD\xFE\xA2dipfsX\"\x12 \x94\x8E\x98%\x822\xF3MC\x02K\xCF \xA5n\xBCF\xB9-\x12hM\xD1\xDBTO\xF4\xFC\xD1\xB3\x0E\xA5dsolcC\0\x08\x1E\x003",
+        b"_\x80\xFD\xFE\xA2dipfsX\"\x12 st\x18A\xBA\x16\x8F\x19\xC3\x19][\xFAU\x8A]G\xDF\xDF\xB6L\xAB\xEA\xE7\x10\xBB\xFC\xF3\xD9^\xBB\xD6dsolcC\0\x08\x1E\x003",
     );
     use alloy::contract as alloy_contract;
     /**Creates a new wrapper around an on-chain [`StdConstants`](self) contract instance.

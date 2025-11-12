@@ -22,22 +22,22 @@ pub mod StorageSlot {
     /// The creation / init bytecode of the contract.
     ///
     /// ```text
-    ///0x608060405234601d57600e6021565b603e602c823930815050603e90f35b6027565b60405190565b5f80fdfe60806040525f80fdfea2646970667358221220cd09818c01f41b9c6c83dd5692beb4889d58f41653769cedc89c6d46fc470f2964736f6c634300081e0033
+    ///0x6080806040523460175760399081601c823930815050f35b5f80fdfe5f80fdfea264697066735822122022395319408a48c4f2eb151f6e152657b37847fb6b0ce36730694328570e2f1764736f6c634300081e0033
     /// ```
     #[rustfmt::skip]
     #[allow(clippy::all)]
     pub static BYTECODE: alloy_sol_types::private::Bytes = alloy_sol_types::private::Bytes::from_static(
-        b"`\x80`@R4`\x1DW`\x0E`!V[`>`,\x8290\x81PP`>\x90\xF3[`'V[`@Q\x90V[_\x80\xFD\xFE`\x80`@R_\x80\xFD\xFE\xA2dipfsX\"\x12 \xCD\t\x81\x8C\x01\xF4\x1B\x9Cl\x83\xDDV\x92\xBE\xB4\x88\x9DX\xF4\x16Sv\x9C\xED\xC8\x9CmF\xFCG\x0F)dsolcC\0\x08\x1E\x003",
+        b"`\x80\x80`@R4`\x17W`9\x90\x81`\x1C\x8290\x81PP\xF3[_\x80\xFD\xFE_\x80\xFD\xFE\xA2dipfsX\"\x12 \"9S\x19@\x8AH\xC4\xF2\xEB\x15\x1Fn\x15&W\xB3xG\xFBk\x0C\xE3g0iC(W\x0E/\x17dsolcC\0\x08\x1E\x003",
     );
     /// The runtime bytecode of the contract, as deployed on the network.
     ///
     /// ```text
-    ///0x60806040525f80fdfea2646970667358221220cd09818c01f41b9c6c83dd5692beb4889d58f41653769cedc89c6d46fc470f2964736f6c634300081e0033
+    ///0x5f80fdfea264697066735822122022395319408a48c4f2eb151f6e152657b37847fb6b0ce36730694328570e2f1764736f6c634300081e0033
     /// ```
     #[rustfmt::skip]
     #[allow(clippy::all)]
     pub static DEPLOYED_BYTECODE: alloy_sol_types::private::Bytes = alloy_sol_types::private::Bytes::from_static(
-        b"`\x80`@R_\x80\xFD\xFE\xA2dipfsX\"\x12 \xCD\t\x81\x8C\x01\xF4\x1B\x9Cl\x83\xDDV\x92\xBE\xB4\x88\x9DX\xF4\x16Sv\x9C\xED\xC8\x9CmF\xFCG\x0F)dsolcC\0\x08\x1E\x003",
+        b"_\x80\xFD\xFE\xA2dipfsX\"\x12 \"9S\x19@\x8AH\xC4\xF2\xEB\x15\x1Fn\x15&W\xB3xG\xFBk\x0C\xE3g0iC(W\x0E/\x17dsolcC\0\x08\x1E\x003",
     );
     use alloy::contract as alloy_contract;
     /**Creates a new wrapper around an on-chain [`StorageSlot`](self) contract instance.

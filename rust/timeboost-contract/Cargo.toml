@@ -4,13 +4,12 @@ description = "Rust contract bindings"
 edition     = "2024"
 
 [dependencies]
-alloy   = { version = "1", features = ["signer-mnemonic"] }
+alloy = { version = "1", features = ["node-bindings", "signer-mnemonic", "transport-ws"] }
 anyhow  = "1.0.89"
 futures = { version = "0.3", default-features = false, features = ["alloc"] }
 serde   = { version = "1", features = ["derive"] }
 tracing = "0.1"
 
 [dev-dependencies]
-alloy = { version = "1", features = ["transport-ws", "node-bindings"] }
 rand  = "0.9"
 tokio = { version = "1", features = ["full"] }

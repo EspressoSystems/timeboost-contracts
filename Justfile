@@ -6,4 +6,6 @@ gen-rust-bindings:
         --contracts src \
         --out out \
         --module \
+        --overwrite \
         --bindings-path rust/timeboost-contract/src/bindings
+    (cd rust/timeboost-contract && cargo build)
