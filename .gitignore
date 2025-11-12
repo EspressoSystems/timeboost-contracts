@@ -16,3 +16,5 @@ docker/docker.env
 
 # Lock files
 foundry.lock
+
+rust/timeboost-contract/target/
