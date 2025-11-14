@@ -228,7 +228,7 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
      * @return committee The committee.
      */
     function getCommitteeById(uint64 id) external view virtual returns (Committee memory committee) {
-        if (id < _oldestStoredCommitteeId || committees[id].id != id) {
+        if (id < _oldestStoredCommitteeId || nextCommitteeId == 0 || committees[id].id != id) {
             revert CommitteeIdDoesNotExist(id);
         }
 
