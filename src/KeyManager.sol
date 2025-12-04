@@ -318,7 +318,7 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
             bool valid = SignatureChecker.isValidSignatureNow(members[i].sigKeyAddress, dataHash, signatures[i]);
             if (valid) {
                 validSigs++;
-                if (validSigs >= 2 * (committeeLength - 1) / 3 + 1) {
+                if (validSigs >= (2 * committeeLength) / 3 + 1) {
                     return true;
                 }
             }
