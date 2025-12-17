@@ -67,9 +67,6 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     /// @notice Thrown when the address is invalid.
     error InvalidAddress();
 
-    /// @notice Thrown when the threshold encryption key is already set.
-    error ThresholdEncryptionKeyAlreadySet();
-
     /// @notice Thrown when the committee id does not exist.
     /// @param committeeId The id of the committee.
     error CommitteeIdDoesNotExist(uint64 committeeId);
@@ -164,15 +161,11 @@ contract KeyManager is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
     /**
      * @notice This function is used to set the threshold encryption key.
-     * @dev Reverts if the threshold encryption key is already set.
      * @dev Reverts if the caller is not the manager.
      * @dev Assumes that the threshold encryption key is valid.
      * @param newThresholdEncryptionKey The threshold encryption key.
      */
     function setThresholdEncryptionKey(bytes calldata newThresholdEncryptionKey) external virtual onlyManager {
-        if (thresholdEncryptionKey.length > 0) {
-            revert ThresholdEncryptionKeyAlreadySet();
-        }
         thresholdEncryptionKey = newThresholdEncryptionKey;
         emit ThresholdEncryptionKeyUpdated(newThresholdEncryptionKey);
     }
