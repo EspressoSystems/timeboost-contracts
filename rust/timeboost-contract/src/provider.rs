@@ -1,7 +1,7 @@
 //! Helper functions to build Ethereum [providers](https://docs.rs/alloy/latest/alloy/providers/trait.Provider.html)
 //! Partial Credit: <https://github.com/EspressoSystems/espresso-network/tree/main/contracts/rust/deployer>
 
-use std::ops::Deref;
+use std::{ops::Deref, time::Duration};
 
 use alloy::{
     eips::BlockNumberOrTag,
@@ -61,21 +61,42 @@ pub fn build_provider(
     Ok(ProviderBuilder::new().wallet(wallet).connect_http(url))
 }
 
+#[derive(Debug, Clone)]
+#[non_exhaustive]
+pub struct PubSubProviderConfig {
+    pub url: Url,
+    pub max_retries: u32,
+    pub retry_interval: Duration,
+}
+
+impl PubSubProviderConfig {
+    pub fn new(url: Url) -> Self {
+        Self {
+            url,
+            max_retries: 12,
+            retry_interval: Duration::from_secs(5),
+        }
+    }
+}
+
 /// A PubSub service (with backend handle), disconnect on drop.
-#[derive(Clone)]
-pub struct PubSubProvider(HttpProvider);
+pub struct PubSubProvider {
+    inner: HttpProvider,
+}
 
 impl Deref for PubSubProvider {
     type Target = HttpProvider;
 
     fn deref(&self) -> &Self::Target {
-        &self.0
+        &self.inner
     }
 }
 
 impl PubSubProvider {
-    pub async fn new(ws_url: Url) -> anyhow::Result<Self> {
-        let ws = WsConnect::new(ws_url);
+    pub async fn new(cfg: PubSubProviderConfig) -> anyhow::Result<Self> {
+        let ws = WsConnect::new(cfg.url)
+            .with_max_retries(cfg.max_retries)
+            .with_retry_interval(cfg.retry_interval);
         let provider = ProviderBuilder::new()
             .connect_pubsub_with(ws)
             .await
@@ -83,7 +104,7 @@ impl PubSubProvider {
                 error!(?err, "event pubsub failed to start");
                 err
             })?;
-        Ok(Self(provider))
+        Ok(Self { inner: provider })
     }
 
     /// create an event stream of event type `E`, subscribing since `from_block` on `contract`

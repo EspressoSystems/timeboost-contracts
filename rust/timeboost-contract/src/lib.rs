@@ -8,6 +8,8 @@ use alloy::{
 };
 use anyhow::Result;
 
+#[rustfmt::skip]
+#[allow(unused)]
 mod bindings;
 mod sol_types;
 
